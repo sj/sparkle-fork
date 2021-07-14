@@ -1,0 +1,40 @@
+@import "scss/constants.scss";
+
+$spacing: 15px;
+$close-icon-width: 20px;
+$message-margin: $spacing + $close-icon-width + 5px;
+
+.announcement-container {
+  display: block;
+  z-index: z(announcement);
+  position: absolute;
+  background: $primary;
+  top: 66px;
+  left: 50%;
+  width: 500px;
+  margin: 0 auto 0 -250px;
+  transition: left 0.1s linear;
+
+  &.centered {
+    left: 50%;
+  }
+
+  padding: $spacing 0;
+  border-radius: 0 0 20px 20px;
+  text-align: center;
+
+  .close-button {
+    cursor: pointer;
+    position: absolute;
+    top: $spacing;
+    right: $spacing;
+    :hover {
+      color: var(--primary-color);
+      text-decoration: underline;
+    }
+  }
+}
+
+.announcement-message {
+  margin: 0 $message-margin;
+}

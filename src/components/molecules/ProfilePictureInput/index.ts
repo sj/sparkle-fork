@@ -1,0 +1,1 @@
+export { ProfilePictureInput } from "./ProfilePictureInput";

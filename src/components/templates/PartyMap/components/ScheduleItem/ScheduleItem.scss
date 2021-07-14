@@ -1,0 +1,59 @@
+@import "scss/constants.scss";
+
+.ScheduleItem {
+  display: flex;
+  padding: 10px 16px;
+  margin-top: 10px;
+  margin: 10px -16px 0px -16px;
+  &:hover {
+    background: $dark;
+  }
+
+  &__time-section {
+    border-right: 1px solid $concrete;
+    min-width: 110px;
+    margin-right: 10px;
+  }
+
+  &__event-description {
+    display: block;
+    color: $concrete;
+    white-space: pre-wrap;
+
+    p {
+      display: inline;
+    }
+  }
+
+  &--primary {
+    color: $primaryColor;
+  }
+
+  &__event-section {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  &__entry-room-button {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+  }
+
+  &__event-time,
+  &__event-name {
+    display: block;
+    font-weight: 700;
+  }
+
+  &__event-date {
+    display: block;
+    font-weight: 700;
+    color: $concrete;
+  }
+
+  &__event-host {
+    font-weight: 700;
+  }
+}

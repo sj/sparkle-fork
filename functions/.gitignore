@@ -1,0 +1,11 @@
+node_modules/
+
+# legacy secret files
+secrets.js
+secrets.*.js
+
+*.log
+
+.runtimeconfig.json
+.runtimeconfig.*.json
+serviceAccount.json

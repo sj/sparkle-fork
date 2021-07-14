@@ -1,0 +1,64 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "plugins": ["@typescript-eslint"],
+  "extends": [
+    "react-app",
+    // "eslint:recommended", // @debt enable this + fix the issues in a standalone PR
+    // "plugin:@typescript-eslint/recommended", // @debt enable this + fix the issues in a standalone PR
+    // "plugin:@typescript-eslint/recommended-requiring-type-checking", // @debt enable this + fix the issues in a standalone PR
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended"
+  ],
+  "rules": {
+    "@typescript-eslint/no-redeclare": "warn",
+    "@typescript-eslint/no-use-before-define": "warn",
+    "@typescript-eslint/no-explicit-any": "warn",
+    "@typescript-eslint/no-unused-vars": "error",
+    // these base rules can report incorrect errors when using TypeScript, see the corresponding @typescript-eslint versions
+    "no-redeclare": "off",
+    "no-use-before-define": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "name": "react-redux",
+        "importNames": ["useSelector", "useDispatch"],
+        "message": "Import typed version from hooks/{useSelector|useDispatch}"
+      },
+      {
+        "name": "react-redux-firebase",
+        "importNames": ["useFirestoreConnect"],
+        "message": "Import typed version from hooks/useSparkleFirestoreConnect"
+      },
+      {
+        "name": "firebase",
+        "message": "Use firebase/app instead"
+      },
+      {
+        "name": "lodash",
+        "importNames": ["default"],
+        "message": "Avoid importing all of lodash; import only what you need"
+      },
+      {
+        "name": "mixpanel-browser",
+        "message": "Import safe version from hooks/useMixpanel instead"
+      }
+    ],
+    "react/prop-types": "off",
+    "react/display-name": "warn",
+    // @see https://github.com/facebook/react/tree/master/packages/eslint-plugin-react-hooks#advanced-configuration
+    "react-hooks/exhaustive-deps": [
+      "warn",
+      {
+        "additionalHooks": "(useAsync)"
+      }
+    ]
+  }
+}

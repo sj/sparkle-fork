@@ -1,0 +1,458 @@
+notify-on-fail: &notify-on-fail
+  when:
+    condition: on_fail
+    steps:
+      - run:
+          command: |
+            if [ -z "$SLACK_ACCESS_TOKEN" ]; then
+              circleci-agent step halt
+            fi
+      - slack/notify:
+          event: fail
+          custom: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "⚠️ Job `${CIRCLE_JOB}` on branch `${CIRCLE_BRANCH}` has failed"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Committer*: ${CIRCLE_USERNAME}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*SHA:* ${CIRCLE_SHA1}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "\n *Mentions*: ${SLACK_PARAM_MENTIONS}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Job"
+                      },
+                      "url": "${CIRCLE_BUILD_URL}"
+                    }
+                  ]
+                }
+              ]
+            }
+
+version: 2.1
+orbs:
+  node: circleci/node@4.1.0
+  slack: circleci/slack@4.1.1
+jobs:
+  lint-and-test:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages
+      - run: npm run prettier:check
+      - run: npm run eslint:check
+      - run: npm run test
+      - *notify-on-fail
+  #  smoke-test:
+  #    executor:
+  #      name: node/default
+  #    steps:
+  #      - checkout
+  #      - node/with-cache:
+  #          cache-version: v2
+  #          steps:
+  #            - run: sudo apt-get update
+  #            - run: sudo apt-get install libgtk2.0-0 libgtk-3-0 libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2 libxtst6 xauth xvfb
+  #            - run: npm install
+  #            - run: npm run cy:install # cache this instead
+  #            - run: npm run cy:run
+  #            - *notify-on-fail
+  deploy-functions:
+    executor: node/default
+    working_directory: ~/project/functions # ensure our steps (except for checkout) run in this directory
+    steps:
+      - checkout:
+          path: ~/project # override the path just for checkout
+      - node/install-packages
+      - run:
+          command: |
+            if [ $CIRCLE_BRANCH = "staging" ]; then
+              ENV=staging
+            fi
+            if [ $CIRCLE_BRANCH = "master" ]; then
+              ENV=prod
+            fi
+            if [ $CIRCLE_BRANCH = "sparkleverse" ]; then
+              ENV=sparkleverse
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle1" ]; then
+              ENV=sparkle-1
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle2" ]; then
+              ENV=sparkle-2a
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle3" ]; then
+              ENV=sparkle-3
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle4" ]; then
+              ENV=sparkle-4
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle5" ]; then
+              ENV=sparkle-5
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle6" ]; then
+              ENV=sparkle-6
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle7" ]; then
+              ENV=sparkle-7
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle8" ]; then
+              ENV=sparkle-8
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle9" ]; then
+              ENV=sparkle-9
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle10" ]; then
+              ENV=sparkle-10
+            fi
+            if [ $CIRCLE_BRANCH = "bigtop" ]; then
+              ENV=sparkle-bigtop
+            fi
+            if [ $CIRCLE_BRANCH = "deloitte" ]; then
+              ENV=sparkle-deloitte
+            fi
+            if [ $CIRCLE_BRANCH = "env/kotr" ]; then
+              ENV=sparkle-kotr
+            fi
+            if [ $CIRCLE_BRANCH = "env/memrise" ]; then
+              ENV=sparkle-memrise
+            fi
+            if [ $CIRCLE_BRANCH = "env/unesco" ]; then
+              ENV=sparkle-unesco
+            fi
+            if [ $CIRCLE_BRANCH = "env/ohbm" ]; then
+              ENV=sparkle-ohbm
+            fi
+            if [ $CIRCLE_BRANCH = "env/pa" ]; then
+              ENV=sparkle-pa
+            fi
+            if [ $CIRCLE_BRANCH = "env/demo" ]; then
+              ENV=sparkle-demo-e65b1
+            fi
+            if [ $CIRCLE_BRANCH = "env/unity" ]; then
+              ENV=sparkle-unity
+            fi
+            if [ $CIRCLE_BRANCH = "env/clever" ]; then
+              ENV=sparkle-clever
+            fi
+            if [ $CIRCLE_BRANCH = "env/burn" ]; then
+              ENV=sparkle-burn
+            fi
+            if [ $CIRCLE_BRANCH = "env/burn-staging" ]; then
+              ENV=sparkle-burn-staging
+            fi
+            if [ $CIRCLE_BRANCH = "env/github" ]; then
+              ENV=sparkle-github
+            fi
+            if [ $CIRCLE_BRANCH = "env/summit-hack" ]; then
+              ENV=sparkle-summit-hack
+            fi
+
+            ./node_modules/.bin/firebase use $ENV --token "$FIREBASE_TOKEN"
+
+            # -f, --force: delete Cloud Functions missing from the current working directory without confirmation
+            ./node_modules/.bin/firebase deploy --only functions --token "$FIREBASE_TOKEN" --force
+
+            ./node_modules/.bin/firebase deploy --only firestore:rules --token "$FIREBASE_TOKEN"
+
+            ./node_modules/.bin/firebase deploy --only storage --token "$FIREBASE_TOKEN"
+            ./node_modules/.bin/firebase deploy --only storage:rules --token "$FIREBASE_TOKEN"
+      - *notify-on-fail
+  deploy-hosting:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages
+      - run:
+          command: |
+            if [ $CIRCLE_BRANCH = "staging" ]; then
+              PREFIX=STAGING_
+              ENV=staging
+              TARGET=staging
+              RELEASE_STAGE=staging
+            fi
+            if [ $CIRCLE_BRANCH = "master" ]; then
+              PREFIX=PROD_
+              ENV=prod
+              TARGET=co-reality-map
+              RELEASE_STAGE=production
+            fi
+            if [ $CIRCLE_BRANCH = "sparkleverse" ]; then
+              PREFIX=SPARKLEVERSE_
+              ENV=sparkleverse
+              TARGET=sparkleverse
+              RELEASE_STAGE=sparkleverse
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle1" ]; then
+              PREFIX=SPARKLE1_
+              ENV=sparkle-1
+              TARGET=sparkle-1
+              RELEASE_STAGE=sparkle1
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle2" ]; then
+              PREFIX=SPARKLE2_
+              ENV=sparkle-2a
+              TARGET=sparkle-2a
+              RELEASE_STAGE=sparkle2
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle3" ]; then
+              PREFIX=SPARKLE3_
+              ENV=sparkle-3
+              TARGET=sparkle-3
+              RELEASE_STAGE=sparkle3
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle4" ]; then
+              PREFIX=SPARKLE4_
+              ENV=sparkle-4
+              TARGET=sparkle-4
+              RELEASE_STAGE=sparkle4
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle5" ]; then
+              PREFIX=SPARKLE5_
+              ENV=sparkle-5
+              TARGET=sparkle-5
+              RELEASE_STAGE=sparkle5
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle6" ]; then
+              PREFIX=SPARKLE6_
+              ENV=sparkle-6
+              TARGET=sparkle-6
+              RELEASE_STAGE=sparkle6
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle7" ]; then
+              PREFIX=SPARKLE7_
+              ENV=sparkle-7
+              TARGET=sparkle-7
+              RELEASE_STAGE=sparkle7
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle8" ]; then
+              PREFIX=SPARKLE8_
+              ENV=sparkle-8
+              TARGET=sparkle-8
+              RELEASE_STAGE=sparkle8
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle9" ]; then
+              PREFIX=SPARKLE9_
+              ENV=sparkle-9
+              TARGET=sparkle-9
+              RELEASE_STAGE=sparkle9
+            fi
+            if [ $CIRCLE_BRANCH = "sparkle10" ]; then
+              PREFIX=SPARKLE10_
+              ENV=sparkle-10
+              TARGET=sparkle-10
+              RELEASE_STAGE=sparkle10
+            fi
+            if [ $CIRCLE_BRANCH = "bigtop" ]; then
+              PREFIX=BIGTOP_
+              ENV=sparkle-bigtop
+              TARGET=sparkle-bigtop
+              RELEASE_STAGE=bigtop
+            fi
+            if [ $CIRCLE_BRANCH = "deloitte" ]; then
+              PREFIX=DELOITTE_
+              ENV=sparkle-deloitte
+              TARGET=sparkle-deloitte
+              RELEASE_STAGE=deloitte
+            fi
+            if [ $CIRCLE_BRANCH = "env/kotr" ]; then
+              PREFIX=KOTR_
+              ENV=sparkle-kotr
+              TARGET=sparkle-kotr
+              RELEASE_STAGE=env/kotr
+            fi
+            if [ $CIRCLE_BRANCH = "env/memrise" ]; then
+              PREFIX=MEMRISE_
+              ENV=sparkle-memrise
+              TARGET=sparkle-memrise
+              RELEASE_STAGE=env/memrise
+            fi
+            if [ $CIRCLE_BRANCH = "env/unesco" ]; then
+              PREFIX=UNESCO_
+              ENV=sparkle-unesco
+              TARGET=sparkle-unesco
+              RELEASE_STAGE=env/unesco
+            fi
+            if [ $CIRCLE_BRANCH = "env/ohbm" ]; then
+              PREFIX=OHBM_
+              ENV=sparkle-ohbm
+              TARGET=sparkle-ohbm
+              RELEASE_STAGE=env/ohbm
+            fi
+            if [ $CIRCLE_BRANCH = "env/pa" ]; then
+              PREFIX=PA_
+              ENV=sparkle-pa
+              TARGET=sparkle-pa
+              RELEASE_STAGE=env/pa
+            fi
+            if [ $CIRCLE_BRANCH = "env/demo" ]; then
+              PREFIX=DEMO_
+              ENV=sparkle-demo-e65b1
+              TARGET=sparkle-demo-e65b1
+              RELEASE_STAGE=env/demo
+            fi
+            if [ $CIRCLE_BRANCH = "env/unity" ]; then
+              PREFIX=UNITY_
+              ENV=sparkle-unity
+              TARGET=sparkle-unity
+              RELEASE_STAGE=env/unity
+            fi
+            if [ $CIRCLE_BRANCH = "env/clever" ]; then
+              PREFIX=CLEVER_
+              ENV=sparkle-clever
+              TARGET=sparkle-clever
+              RELEASE_STAGE=env/clever
+            fi
+            if [ $CIRCLE_BRANCH = "env/burn" ]; then
+              PREFIX=BURN_
+              ENV=sparkle-burn
+              TARGET=sparkle-burn
+              RELEASE_STAGE=env/burn
+            fi
+            if [ $CIRCLE_BRANCH = "env/burn-staging" ]; then
+              PREFIX=BURN_STAGING_
+              ENV=sparkle-burn-staging
+              TARGET=sparkle-burn-staging
+              RELEASE_STAGE=env/burn-staging
+            fi
+            if [ $CIRCLE_BRANCH = "env/github" ]; then
+              PREFIX=GITHUB_
+              ENV=sparkle-github
+              TARGET=sparkle-github
+              RELEASE_STAGE=env/github
+            fi
+            if [ $CIRCLE_BRANCH = "env/summit-hack" ]; then
+              PREFIX=SUMMIT_HACK_
+              ENV=sparkle-summit-hack
+              TARGET=sparkle-summit-hack
+              RELEASE_STAGE=env/summit-hack
+            fi
+
+            ./scripts/init-env.sh $PREFIX
+
+            npm run build -- --profile
+
+            ./node_modules/.bin/firebase use $ENV --token "$FIREBASE_TOKEN"
+            ./node_modules/.bin/firebase deploy --only hosting:$TARGET --token "$FIREBASE_TOKEN"
+
+            # Notify Bugsnag that the application has been deployed
+            curl https://build.bugsnag.com/ \
+              --header "Content-Type: application/json" \
+              --data '{
+                "apiKey": "${REACT_APP_BUGSNAG_API_KEY}",
+                "appVersion": "${CIRCLE_SHA1}",
+                "releaseStage": "${RELEASE_STAGE}",
+                "builderName": "${CIRCLE_USERNAME}",
+                "sourceControl": {
+                  "provider": "github",
+                  "repository": "https://github.com/sparkletown/sparkle",
+                  "revision": "${CIRCLE_SHA1}"
+                },
+                "metadata": {
+                  "pullRequest": "${CIRCLE_PULL_REQUESTS}",
+                  "ciBuildUrl: "${CIRCLE_BUILD_URL}",
+                  "ciBuildNum "${CIRCLE_BUILD_NUM}"
+                }
+              }'
+      - *notify-on-fail
+workflows:
+  build-test-deploy:
+    jobs:
+      - lint-and-test
+      - deploy-functions:
+          requires:
+            - lint-and-test
+          filters:
+            branches:
+              only:
+                - master
+                - staging
+                - sparkleverse
+                - sparkle1
+                - sparkle2
+                - sparkle3
+                - sparkle4
+                - sparkle5
+                - sparkle6
+                - sparkle7
+                - sparkle8
+                - sparkle9
+                - sparkle10
+                - bigtop
+                - deloitte
+                - env/kotr
+                - env/memrise
+                - env/unesco
+                - env/ohbm
+                - env/pa
+                - env/demo
+                - env/unity
+                - env/clever
+                - env/burn
+                - env/burn-staging
+                - env/github
+                - env/summit-hack
+      - deploy-hosting:
+          requires:
+            - lint-and-test
+          filters:
+            branches:
+              only:
+                - master
+                - staging
+                - sparkleverse
+                - sparkle1
+                - sparkle2
+                - sparkle3
+                - sparkle4
+                - sparkle5
+                - sparkle6
+                - sparkle7
+                - sparkle8
+                - sparkle9
+                - sparkle10
+                - bigtop
+                - deloitte
+                - env/kotr
+                - env/memrise
+                - env/unesco
+                - env/ohbm
+                - env/pa
+                - env/demo
+                - env/unity
+                - env/clever
+                - env/burn
+                - env/burn-staging
+                - env/github
+                - env/summit-hack
+#      - smoke-test:
+#          requires:
+#            - deploy-functions
+#            - deploy-hosting
+#          filters:
+#            branches:
+#              only:
+#                - staging

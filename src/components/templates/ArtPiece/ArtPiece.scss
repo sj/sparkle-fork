@@ -1,0 +1,57 @@
+.full-page-container.art-piece-container {
+  padding: 0;
+
+  .content {
+    display: flex;
+    padding-left: 70px;
+    flex-grow: 1;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .aspect-container {
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+
+    // Default aspect ratio 2.39:1
+    padding-top: (1/2.39) * 100%;
+
+    &.aspect-16-9 {
+      padding-top: (9/16) * 100%;
+    }
+  }
+
+  .youtube-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .video-chat-wrapper {
+    display: grid;
+    margin: 1rem 0;
+    grid-template-columns: repeat(15, 1fr);
+    grid-gap: 1rem;
+  }
+  .title-sidebar {
+    font-size: 22px;
+    font-weight: bold;
+  }
+  .short-description-sidebar {
+    font-size: 15px;
+    font-weight: bold;
+  }
+}
+.sparkle-fairies {
+  position: fixed;
+  top: 250px;
+  left: 0px;
+}
+.donate-popup {
+  position: fixed;
+  top: 370px;
+  left: 0px;
+}

@@ -1,0 +1,22 @@
+@import "scss/constants";
+
+.Chatbox {
+  height: 100%;
+  display: flex;
+  flex-flow: column;
+
+  &__messages {
+    flex: 1;
+    display: flex;
+    flex-flow: column-reverse;
+    justify-self: flex-end;
+    padding: $spacing--xl $spacing--lg 0;
+    overflow-x: auto;
+  }
+
+  &__form-box {
+    background-color: $black;
+    display: flex;
+    flex-flow: column;
+  }
+}

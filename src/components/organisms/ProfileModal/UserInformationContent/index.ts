@@ -1,0 +1,1 @@
+export { UserInformationContent } from "./UserInformationContent";
